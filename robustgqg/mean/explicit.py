@@ -1,67 +1,96 @@
 from __future__ import annotations
-import math
 import numpy as np
-from typing import Optional, Dict
 from robustgqg.types import Array
 from robustgqg.mean.base import BaseMeanEstimator
-from robustgqg.mean.options import MeanOptions
-from robustgqg.mean.utils import (
-    weights_uniform,
-    normalize_simplex,
-    F_cov_spectral,
-)
-from robustgqg.mean.projections import project_capped_simplex_kl
 
 __all__ = ["ExplicitLowRegretMean"]
+
+def project_capped_simplex_kl(z: Array, cap: float, total: float = 1.0) -> Array:
+    """KL (I-projection) using the **active-set water-filling** algorithm from the paper (pp. 48–49).
+
+    Problem: minimize D_KL(q||z) subject to q ≥ 0, Σ q = total, and q_i ≤ cap.
+    KKT ⇒ q_i = min(cap, t z_i). The algorithm determines the active capped set by
+    searching over k (number of capped coordinates) in order of z_i size.
+
+    Steps:
+      1) Sort indices by z_i descending: z_(1) ≥ ... ≥ z_(n).
+      2) For each k = 0..k_max, compute t_k = (total - k·cap) / Σ_{i>k} z_(i).
+      3) Find k s.t. consistency holds: t_k z_(k) ≥ cap (for i ≤ k) and t_k z_(k+1) ≤ cap.
+      4) Set q_(i) = cap for i ≤ k, and q_(i) = t_k z_(i) for i > k; undo the sort.
+    """
+    z = np.maximum(np.asarray(z, dtype=float), 1e-300)
+    n = z.size
+    if n == 0:
+        return z
+    if cap <= 0:
+        # All mass must be zero if cap==0 and total>0 is infeasible; return uniform tiny vector
+        return np.full_like(z, 0.0)
+    # Sort z descending with original indices
+    idx = np.argsort(-z)
+    zs = z[idx]
+    # Prefix sums of zs for fast tail sums
+    prefix = np.cumsum(zs)
+    # Maximum number of capped coordinates cannot exceed floor(total / cap)
+    k_max = min(n, int(np.floor(total / cap)))
+
+    def tail_sum_from(k: int) -> float:
+        # sum_{i=k..n-1} zs[i] when using 0-based Python indices
+        if k >= n:
+            return 0.0
+        return float(prefix[-1] - (prefix[k-1] if k > 0 else 0.0))
+
+    chosen_k = None
+    chosen_t = None
+    for k in range(0, k_max + 1):
+        S_tail = tail_sum_from(k)
+        if S_tail < 1e-300:
+            # Only feasible if total == k*cap (i.e., all capped)
+            if abs(total - k * cap) <= 1e-12:
+                chosen_k, chosen_t = k, 0.0
+                break
+            else:
+                continue
+        t_k = (total - k * cap) / S_tail
+        if t_k < 0:
+            # too many capped; increasing k only decreases numerator, so break
+            break
+        theta = np.inf if t_k == 0 else (cap / t_k)
+        cond_upper = True if k == 0 else (zs[k-1] >= theta)
+        cond_lower = True if k == n else (zs[k] <= theta)
+        if cond_upper and cond_lower:
+            chosen_k, chosen_t = k, t_k
+            break
+
+    if chosen_k is None:
+        # Fallback to bisection method for robustness
+        return project_capped_simplex_kl(z, cap=cap, total=total)
+
+    k = chosen_k
+    t = max(0.0, chosen_t)
+    q_sorted = np.empty_like(zs)
+    if k > 0:
+        q_sorted[:k] = cap
+    if k < n:
+        q_sorted[k:] = t * zs[k:]
+    q = np.empty_like(z)
+    q[idx] = q_sorted
+    # Renormalize for numerical safety
+    s = float(q.sum())
+    if s > 0:
+        q *= (total / s)
+    return q
+
+
 
 class ExplicitLowRegretMean(BaseMeanEstimator):
     """Algorithm 1: Explicit low-regret robust mean estimation (bounded covariance).
 
     Update rule:
         q̃_i = q_i * (1 - η_k * g_i),   where g_i = (vᵀ(x_i - µ_q))²,  v = top-eigenvector(Σ_q)
-        q   = Proj_{Δ_{n,ε}}(q̃) using either L2 (default) or KL projection.
+        q   = Proj_{Δ_{n,ε}}(q̃) using KL projection.
     """
 
-    def _project_deleted_simplex(self, z: Array) -> Array:
+    def _project_onto_simplex(self, z: Array) -> Array:
         return project_capped_simplex_kl(np.maximum(z, 0.0), cap=self.cap, total=1.0)
 
-
-    def run(self, q0: Optional[Array] = None) -> Dict[str, Array | float | int]:
-        # Initialize weights q: uniform over n points if not provided
-        q = weights_uniform(self.n) if q0 is None else normalize_simplex(q0)
-        last_F = math.inf
-        for k in range(self.opts.max_iter):
-            # Step 1: compute current objective and certificate
-            #   μ_q = weighted mean, Σ_q = weighted covariance, v = top eigenvector(Σ_q)
-            F, mu, v = F_cov_spectral(self.X, q)
-
-            # Optionally print progress
-            if self.opts.verbose and (k % 25 == 0 or k == 0):
-                print(f"[Explicit] iter={k}  F={F:.6g}")
-
-            # Early stop if we already satisfy target covariance bound
-            if self.opts.target_xi is not None and F <= self.opts.target_xi:
-                return {"q": q, "mu": mu, "F": F, "iters": k}
-            
-            # Step 2: form quasi‑gradient g_i = (vᵀ(x_i − μ_q))² for each point
-            Xc_v = (self.X - mu) @ v
-            g = Xc_v ** 2
-
-            # Step 3: set learning rate η_k = η / (2 B_k), with B_k = max g_i
-            Bk = max(1e-12, float(np.max(g)))
-            eta_k = self.opts.eta / (2.0 * Bk)
-
-            # Step 4: multiplicative update q̃_i = q_i (1 − η_k g_i)
-            q_tilde = q * (1.0 - eta_k * g)
-
-            # Step 5: project back to feasible set Δ_{n,ε}
-            q = self._project_deleted_simplex(q_tilde)
-
-            # Step 6: check relative progress on F for convergence
-            if last_F < math.inf and abs(F - last_F) <= self.opts.tol_rel * max(1.0, last_F):
-                return {"q": q, "mu": mu, "F": F, "iters": k + 1}
-            last_F = F
-        
-        # Final evaluation after exhausting max_iter
-        F, mu, _ = F_cov_spectral(self.X, q)
-        return {"q": q, "mu": mu, "F": F, "iters": self.opts.max_iter}
+    

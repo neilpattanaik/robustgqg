@@ -5,21 +5,6 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "robustgqg"
 version = "0.1.0"
-description = "Robust estimation via Generalized Quasi-Gradients (mean estimation)"
-readme = "README.md"
-authors = [{ name = "Your Name" }]
-requires-python = ">=3.9"
-license = { text = "MIT" }
-keywords = ["robust", "statistics", "optimization", "quasi-gradient"]
-classifiers = [
-  "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
-  "Intended Audience :: Science/Research",
-  "Topic :: Scientific/Engineering :: Mathematics",
-]
-
-[project.urls]
-Homepage = "https://example.com"
 
 [tool.setuptools.packages.find]
 where = ["."]
