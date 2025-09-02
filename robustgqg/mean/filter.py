@@ -1,6 +1,6 @@
 from __future__ import annotations
 from robustgqg.mean.base import BaseMeanEstimator
-from robustgqg.mean.utils import normalize_simplex
+from robustgqg.utils import normalize_simplex
 from robustgqg.types import Array
 
 __all__ = ["FilterMean"]

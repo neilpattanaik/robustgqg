@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from robustgqg.types import Array
 from robustgqg.mean.options import MeanOptions
 from robustgqg.mean.options import MeanOptions
-from robustgqg.mean.utils import (
+from robustgqg.utils import (
     weights_uniform,
     normalize_simplex,
     F_cov_spectral,
