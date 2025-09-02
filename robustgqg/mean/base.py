@@ -4,7 +4,6 @@ from typing import Optional, Dict
 from abc import ABC, abstractmethod
 from robustgqg.types import Array
 from robustgqg.mean.options import MeanOptions
-from robustgqg.mean.options import MeanOptions
 from robustgqg.utils import (
     weights_uniform,
     normalize_simplex,
