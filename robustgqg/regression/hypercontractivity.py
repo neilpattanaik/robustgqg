@@ -21,7 +21,7 @@ class HyperContractivityOracle:
 
     using a degree‑2/degree‑4 Sum‑of‑Squares (SoS) relaxation on whitened
     data.  Whitening with respect to :math:`E_q[XX^\\top]` normalizes the
-    denominator to one, so the relaxation maximises the quartic moment of
+    denominator to one, so the relaxation maximizes the quartic moment of
     the whitened samples.  The resulting SDP yields an upper bound on
     :math:`F_1(q)` together with a feasible pseudo‑moment vector :math:`y`.  From
     :math:`y` we extract a non‑negative quasi‑gradient over samples that the
@@ -79,11 +79,11 @@ class HyperContractivityOracle:
 
     - Moment matrix PSD: :math:`M(y) \\succeq 0` where
       :math:`M_{\\alpha,\\beta} = y_{\\alpha+\\beta}` for :math:`|\\alpha|,|\\beta| \\le 2`.
-    - Normalisation: :math:`y_{\\boldsymbol{0}} = 1`.
-    - Sphere constraints (localisers):
+    - Normalization: :math:`y_{\\boldsymbol{0}} = 1`.
+    - Sphere constraints (localizers):
       :math:`\\sum_{i=1}^d y_{\\alpha + 2 e_i} = y_{\\alpha}` for all :math:`|\\alpha| \\le 2`.
 
-    Maximise the linear objective
+    Maximize the linear objective
 
     .. math::
 
@@ -92,7 +92,7 @@ class HyperContractivityOracle:
     which upper‑bounds :math:`\\sup_{\|u\|=1} E_q[(u^\\top z)^4]`. From the
     optimal pseudo‑moments :math:`y` we define a non‑negative quartic
     polynomial :math:`p(z) = \\sum_{|\\alpha|=4} c_{\\alpha} z^{\\alpha}` whose
-    coefficients :math:`c_{\\alpha}` are the appropriately symmetrised entries
+    coefficients :math:`c_{\\alpha}` are the appropriately symmetrized entries
     of :math:`y`; the sample‑wise quasi‑gradient is :math:`g_1[i] = p(z_i)`.
     """
 
@@ -140,7 +140,7 @@ class HyperContractivityOracle:
     def _eigh_psd(A: Array, eps: float = 1e-18) -> Tuple[Array, Array]:
         """Eigen‑decomposition with PSD clipping.
 
-        Symmetrises :math:`A` as :math:`(A + A^T)/2` and computes its eigenvalues
+        Symmetrizes :math:`A` as :math:`(A + A^T)/2` and computes its eigenvalues
         and eigenvectors. Eigenvalues are then lower‑bounded by ``eps`` to
         ensure positive semi‑definiteness when building inverse square
         roots.
@@ -169,7 +169,7 @@ class HyperContractivityOracle:
 
         Forms :math:`B = E_q[XX^T] = X^T diag(q) X` and returns its inverse
         square root. A small ``ridge`` multiple of the identity is added
-        to stabilise ill‑conditioned problems.
+        to stabilize ill‑conditioned problems.
 
         Parameters
         ----------
@@ -178,7 +178,7 @@ class HyperContractivityOracle:
         q : ndarray of shape ``(n,)``
             Non‑negative weights (will be normalized to sum to one).
         ridge : float, default ``1e-8``
-            Tikhonov regularisation added to ``B`` before inversion.
+            Tikhonov regularization added to ``B`` before inversion.
 
         Returns
         -------
@@ -196,7 +196,7 @@ class HyperContractivityOracle:
 
     @staticmethod
     def _coeff_vec_for_square(z: Array) -> Array:
-        """Vectorise the symmetric square :math:`z z^T` with 2× off‑diagonals.
+        """Vectorize the symmetric square :math:`z z^T` with 2× off‑diagonals.
 
         Returns the unique degree‑2 monomials arranged as upper‑triangular
         entries of :math:`z z^T` with off‑diagonal terms scaled by :math:`2`:
@@ -210,7 +210,7 @@ class HyperContractivityOracle:
         Returns
         -------
         ndarray of shape ``(d(d+1)/2,)``
-            The symmetric monomial vectorisation of ``z``.
+            The symmetric monomial vectorization of ``z``.
         """
         d = z.size
         vec = []

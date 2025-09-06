@@ -406,8 +406,8 @@ class FilterRegression:
             F_2(q) = \\sup_{v \neq 0} \frac{\\mathbb{E}_q[(y - x^T\theta)^2 (v^T x)^2]}{\\mathbb{E}_q[(v^T x)^2]},
 
         where ``\theta`` is the weighted least‑squares estimator with respect
-        to the weight vector ``q``.  The maximising direction ``v`` solves
-        the generalised eigenproblem ``A v = \\lambda S_2 v`` with
+        to the weight vector ``q``.  The maximizing direction ``v`` solves
+        the generalized eigenproblem ``A v = \\lambda S_2 v`` with
 
         ``S_2 = E_q[X X^T]``, ``A = E_q[r^2 X X^T]`` and
         ``r = y - X \theta``.  The returned quasi‑gradient has entries
@@ -425,7 +425,7 @@ class FilterRegression:
         Returns
         -------
         (float, ndarray, ndarray)
-            A triple ``(F2_value, v, g2)`` consisting of the maximised value
+            A triple ``(F2_value, v, g2)`` consisting of the maximized value
             of ``F_2``, the direction ``v`` (unit normalized with respect
             to ``E_q[(v^T X)^2]``) and the non‑negative quasi‑gradient ``g2``.
         """
@@ -441,7 +441,7 @@ class FilterRegression:
         S2 = (X.T * q) @ X
         # Form A = E_q[r^2 X X^T] where r^2 weights each sample
         A = (X.T * (q * r2)) @ X
-        # Symmetrise S2 and A to avoid numerical asymmetry
+        # Symmetrize S2 and A to avoid numerical asymmetry
         S2 = (S2 + S2.T) / 2.0
         A = (A + A.T) / 2.0
         # Compute eigen-decomposition of S2 to whiten it
@@ -471,7 +471,7 @@ class FilterRegression:
         """Solve a weighted least–squares problem.
 
         For a given weight vector ``q`` summing to one, this function
-        computes the minimiser
+        computes the minimizer
 
         .. math::
 

@@ -33,7 +33,7 @@ def weights_uniform(n: int) -> Array:
 
 
 def normalize_simplex(q: Array) -> Array:
-    """Project to the full simplex by non‑negativity and renormalisation.
+    """Project to the full simplex by non‑negativity and renormalization.
 
     Sets negative entries to zero and divides by the sum; if the sum is
     non‑positive, returns the uniform vector.
