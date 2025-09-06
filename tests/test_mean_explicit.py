@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from numpy.linalg import norm
-from robustgqg.mean import MeanOptions, ExplicitLowRegretMean
+from robustgqg.mean import ExplicitLowRegretMean
 from robustgqg.mean.explicit import project_capped_simplex_kl
 from .utils import make_contaminated_mean_data
 
@@ -9,8 +9,7 @@ SEED = 42
 np.random.seed(SEED)
 
 def run_algo(X, eps, **kw):
-    opts = MeanOptions(eps=eps, max_iter=800, eta=1.0, verbose=False, **kw)
-    est = ExplicitLowRegretMean(X, opts)
+    est = ExplicitLowRegretMean(X, eps, max_iter=800, eta=1.0, verbose=False, **kw)
     return est.run()
 
 

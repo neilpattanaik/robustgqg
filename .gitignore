@@ -1,3 +1,34 @@
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments / tooling
 .venv/
+.env
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
 .vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Coverage / reports
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Docs
+docs/build/

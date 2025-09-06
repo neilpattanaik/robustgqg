@@ -3,15 +3,14 @@ import numpy as np
 from numpy.linalg import norm
 import pytest
 
-from robustgqg.mean import MeanOptions, FilterMean
+from robustgqg.mean import FilterMean
 from .utils import make_contaminated_mean_data
 
 SEED = 42
 np.random.seed(SEED)
 
 def run_algo(X, eps, **kw):
-    opts = MeanOptions(eps=eps, max_iter=800, eta=1.0, verbose=False, **kw)
-    est = FilterMean(X, opts)
+    est = FilterMean(X, eps, max_iter=800, eta=1.0, verbose=False, **kw)
     return est.run()
 
 def test_filter_beats_naive_mean():

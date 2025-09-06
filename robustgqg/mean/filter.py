@@ -1,18 +1,27 @@
 from __future__ import annotations
+
 from robustgqg.mean.base import BaseMeanEstimator
-from robustgqg.utils import normalize_simplex
 from robustgqg.types import Array
+from robustgqg.utils import normalize_simplex
 
 __all__ = ["FilterMean"]
 
-class FilterMean(BaseMeanEstimator):
-    """
-    Algorithm 2: Filter algorithm for robust mean estimation (bounded covariance model).
 
-    Idea (paper): maintain unnormalized scores c_i, update
-        c_i ← c_i · (1 - η_k g_i),   with g_i = (v^T (x_i - μ_q))^2,
-    where v is the top eigenvector of Σ_q, then renormalize to the simplex:
-        q = c / sum(c)  (projection to Δ_n).
+class FilterMean(BaseMeanEstimator):
+    r"""Filter algorithm for robust mean estimation (bounded covariance).
+
+    This variant projects onto the full probability simplex :math:`\Delta_n`
+    at each iteration (i.e., just renormalizes the non‑negative scores).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from robustgqg.mean import FilterMean
+    >>> X = np.random.default_rng(42).normal(size=(50, 3))
+    >>> est = FilterMean(X, eps=0.1, verbose=False)
+    >>> out = est.run()
+    >>> out['F'] >= 0 and out['q'].sum() == 1.0
+    True
     """
 
     def _project_onto_simplex(self, q: Array) -> Array:
